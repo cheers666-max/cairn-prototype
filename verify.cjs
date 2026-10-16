@@ -1,16 +1,48 @@
 // 浏览器验证：真实渲染 + 表单交互 + 截图
-const PW = '/Users/yuajing/Explore/websearch/node_modules/playwright-core';
-const { chromium } = require(PW);
+// 浏览器验证：真实渲染 + 表单交互 + 截图
+//   node verify.cjs                    # 用默认位置找 playwright-core 与浏览器
+//   PW=<path> EXE=<path> node verify.cjs
 const fs = require('fs');
 const path = require('path');
 
-const FILE = 'file:///Users/yuajing/Explore/cairn-landing/dist/index.html';
-const SHOT = '/Users/yuajing/Explore/cairn-landing/dist/verify';
+// playwright-core：先看环境变量，再依次试常见安装位置
+function findPlaywright() {
+  const candidates = [
+    process.env.PW,
+    path.join(__dirname, '..', 'websearch', 'node_modules', 'playwright-core'),
+    path.join(process.env.HOME || '', 'Explore', 'websearch', 'node_modules', 'playwright-core'),
+    'playwright-core',
+  ].filter(Boolean);
+  for (const c of candidates) {
+    try { return require(c); } catch (_) {}
+  }
+  throw new Error('找不到 playwright-core，请用 PW=<路径> 指定');
+}
+const { chromium } = findPlaywright();
+
+// 浏览器可执行文件：环境变量优先，否则在 ms-playwright 缓存里挑版本号最大的
+function findChromium() {
+  if (process.env.EXE) return process.env.EXE;
+  const root = path.join(process.env.HOME || '', 'Library', 'Caches', 'ms-playwright');
+  if (!fs.existsSync(root)) return undefined;            // 交给 playwright 自己解析
+  const dirs = fs.readdirSync(root)
+    .filter((d) => /^chromium(_headless_shell)?-\d+$/.test(d))
+    .sort((a, b) => parseInt(b.split('-').pop(), 10) - parseInt(a.split('-').pop(), 10));
+  for (const d of dirs) {
+    const exe = path.join(root, d, 'chrome-headless-shell-mac-arm64', 'chrome-headless-shell');
+    if (fs.existsSync(exe)) return exe;
+  }
+  return undefined;
+}
+
+const HERE = __dirname;
+const FILE = 'file://' + path.join(HERE, 'dist', 'index.html');
+const SHOT = path.join(HERE, 'dist', 'verify');
 
 (async () => {
   fs.mkdirSync(SHOT, { recursive: true });
-  const EXE = '/Users/yuajing/Library/Caches/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-mac-arm64/chrome-headless-shell';
-  const browser = await chromium.launch({ executablePath: EXE, headless: true, args: ['--disable-dev-shm-usage', '--no-sandbox'] });
+  const exe = findChromium();
+  const browser = await chromium.launch({ executablePath: exe, headless: true, args: ['--disable-dev-shm-usage', '--no-sandbox'] });
   const errors = [];
 
   for (const [name, viewport] of [['desktop', {width: 900, height: 1200}], ['mobile', {width: 390, height: 844}]]) {
