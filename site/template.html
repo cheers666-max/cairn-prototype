@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cairn — 决策卡片原型 · 反馈表 / Decision-card prototype · feedback</title>
+<meta name="description" content="Cairn 是一台 AI 墨水屏个人助理原型。我们想验证的不是「再加一个通知」，而是「agent 需要你拍板时，把决定送到你手上」。">
+<style>
+  :root{
+    --ink:#141414; --paper:#f7f6f3; --card:#ffffff; --line:#dedbd4;
+    --muted:#6b6862; --accent:#1f4d3a; --warn:#8a5a00; --warnbg:#fdf6e6;
+    --radius:10px;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  }
+  .wrap{max-width:760px;margin:0 auto;padding:28px 20px 80px}
+
+  /* 语言切换 */
+  .langbar{display:flex;gap:6px;justify-content:flex-end;margin-bottom:18px}
+  .langbar button{
+    font:inherit;font-size:13px;padding:5px 14px;border:1px solid var(--line);
+    background:var(--card);color:var(--muted);border-radius:100px;cursor:pointer;
+  }
+  .langbar button[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+  h1{font-size:27px;line-height:1.3;margin:0 0 10px;letter-spacing:-.01em}
+  h2{font-size:19px;margin:34px 0 10px;letter-spacing:-.01em}
+  h3{font-size:15px;margin:22px 0 8px;color:var(--muted);font-weight:600}
+  p{margin:0 0 12px}
+  .lede{font-size:17px;color:#33312d;margin-bottom:20px}
+  .muted{color:var(--muted);font-size:14px}
+  a{color:var(--accent)}
+
+  /* 事实边界：放在最显眼处，是可信度而不是免责声明 */
+  .boundary{
+    background:var(--warnbg);border:1px solid #efdfbc;border-left:4px solid var(--warn);
+    border-radius:var(--radius);padding:14px 16px;margin:22px 0;font-size:14.5px;
+  }
+  .boundary strong{color:var(--warn)}
+  .boundary ul{margin:8px 0 0;padding-left:18px}
+  .boundary li{margin:3px 0}
+
+  /* 卡片展示 */
+  .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:16px 0 8px}
+  @media(max-width:640px){.cards{grid-template-columns:1fr}}
+  figure{margin:0}
+  figure img{width:100%;display:block;border:1px solid var(--line);border-radius:var(--radius);background:#fff}
+  figcaption{font-size:13px;color:var(--muted);margin-top:6px}
+
+  .togglebitmap{font-size:13px;margin:10px 0 0}
+  .togglebitmap button{
+    font:inherit;font-size:13px;padding:4px 10px;border:1px solid var(--line);
+    background:var(--card);border-radius:6px;cursor:pointer;color:var(--muted)
+  }
+  .togglebitmap button[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+  video{width:100%;border-radius:var(--radius);border:1px solid var(--line);background:#000;margin-top:8px}
+
+  /* 表单 */
+  form{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:22px 20px;margin-top:14px}
+  fieldset{border:0;padding:0;margin:0 0 26px}
+  fieldset:last-of-type{margin-bottom:0}
+  legend{
+    font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--accent);padding:0;margin-bottom:12px
+  }
+  .q{margin-bottom:20px}
+  .q:last-child{margin-bottom:0}
+  label.qlabel{display:block;font-weight:600;margin-bottom:8px;line-height:1.5}
+  .hint{font-size:13.5px;color:var(--muted);font-weight:400;margin:-4px 0 8px}
+  .opts{display:flex;flex-direction:column;gap:7px}
+  .opts.inline{flex-direction:row;flex-wrap:wrap;gap:8px}
+  .opt{display:flex;align-items:flex-start;gap:9px;font-size:15px;cursor:pointer;font-weight:400}
+  .opt input{margin:3px 0 0;flex:none;width:16px;height:16px;accent-color:var(--ink)}
+  .opts.inline .opt{
+    border:1px solid var(--line);border-radius:100px;padding:6px 14px;background:var(--paper);
+    align-items:center;gap:6px
+  }
+  .opts.inline .opt:has(input:checked){background:var(--ink);color:#fff;border-color:var(--ink)}
+  textarea,input[type=text],input[type=email],select{
+    width:100%;font:inherit;font-size:15px;padding:9px 11px;border:1px solid var(--line);
+    border-radius:8px;background:var(--paper);color:var(--ink);resize:vertical
+  }
+  textarea{min-height:74px;line-height:1.55}
+  textarea:focus,input:focus,select:focus{outline:2px solid var(--ink);outline-offset:1px;background:#fff}
+  .req{color:#a33;font-weight:600}
+  .cond{display:none;margin-top:12px;padding:12px 14px;background:var(--paper);border-radius:8px;border:1px dashed var(--line)}
+  .cond.on{display:block}
+
+  /* 提交区 */
+  .actions{margin-top:22px;padding-top:20px;border-top:1px solid var(--line);display:flex;flex-wrap:wrap;gap:10px}
+  button.btn{
+    font:inherit;font-weight:600;font-size:15px;padding:11px 20px;border-radius:8px;
+    border:1px solid var(--ink);background:var(--ink);color:#fff;cursor:pointer
+  }
+  button.btn.ghost{background:var(--card);color:var(--ink)}
+  button.btn:active{transform:translateY(1px)}
+  #result{display:none;margin-top:20px;padding:16px;background:var(--paper);border:1px solid var(--line);border-radius:8px}
+  #result.on{display:block}
+  #result textarea{min-height:260px;font-size:13px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;background:#fff}
+  .copyrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;align-items:center}
+  .copied{color:var(--accent);font-size:14px;font-weight:600}
+
+  footer{margin-top:36px;padding-top:18px;border-top:1px solid var(--line);font-size:13.5px;color:var(--muted)}
+  .hidden{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="langbar">
+    <button type="button" id="lang-zh" aria-pressed="true">中文</button>
+    <button type="button" id="lang-en" aria-pressed="false">English</button>
+  </div>
+
+  <!-- ═══════════ 头部 ═══════════ -->
+  <div class="i18n" data-zh>
+    <h1>Cairn：当 agent 需要你拍板，把那个决定送到你手上</h1>
+    <p class="lede">
+      这是一台 <strong>AI 墨水屏个人助理</strong>的原型。我们想验证的不是「再加一个通知渠道」，
+      而是：当你离开电脑时，把 agent 的决定<strong>放在一个固定的地方</strong>，是不是比手机推送更适合你的注意力节奏。
+    </p>
+    <p>
+      下面是它的三张卡片。看完之后，如果你愿意花 <strong>3 分钟</strong>填一下表单，对我们帮助非常大——
+      <strong>说「我不需要」同样是有价值的答案</strong>，那正是我们在找的东西。
+    </p>
+  </div>
+  <div class="i18n hidden" data-en>
+    <h1>Cairn: when an agent needs your call, the decision comes to you</h1>
+    <p class="lede">
+      This is a prototype of an <strong>e-ink personal assistant</strong>. We are not trying to add one more
+      notification channel. We are testing whether <strong>parking an agent's decision in one fixed place</strong>
+      fits your attention better than a phone push when you have stepped away.
+    </p>
+    <p>
+      Below are its three cards. If you can spare <strong>3 minutes</strong> for the form, it helps us a lot —
+      and <strong>"I don't need this" is just as valuable to us</strong>. That is the answer we are actually hunting for.
+    </p>
+  </div>
+
+  <!-- ═══════════ 事实边界 ═══════════ -->
+  <div class="boundary">
+    <div class="i18n" data-zh>
+      <strong>先说清楚这是什么，免得你按想象回答</strong>
+      <ul>
+        <li>这是 <strong>USB 开发样机</strong>的软件侧演示：<strong>需要连一台电脑</strong>，页面里的卡片是软件渲染的，<strong>不是实体墨水屏刷新画面</strong>。</li>
+        <li><strong>独立联网、电池、磁吸结构都还没做。</strong>整机厚度未量测，<strong>7.5mm 是设计目标值，不是已达成参数</strong>。</li>
+        <li><strong>录音 / 语音转文字没实现</strong>；<strong>不运行 Android、不能装 App</strong>；接的是你自己选的模型服务。</li>
+        <li>没有价格、没有上市时间、没有订阅计划。这一轮只问设备本身值不值得买。</li>
+      </ul>
+    </div>
+    <div class="i18n hidden" data-en>
+      <strong>First, what this actually is — so you don't answer the wrong question</strong>
+      <ul>
+        <li>A software-side demo of a <strong>USB dev prototype</strong>: it <strong>needs a computer attached</strong>. The cards below are software-rendered, <strong>not photos of a real e-ink refresh</strong>.</li>
+        <li><strong>Standalone Wi-Fi, battery, and the magnetic mount are not built.</strong> Final thickness is unmeasured; <strong>7.5&nbsp;mm is a design target, not an achieved spec</strong>.</li>
+        <li><strong>No recording or transcription</strong>; it does <strong>not run Android and installs no apps</strong>; it talks to a model service you choose.</li>
+        <li>No price, no ship date, no subscription plan. This round is only about whether the device itself is worth buying.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ═══════════ 三张卡片 ═══════════ -->
+  <div class="i18n" data-zh><h2>三张决策卡片</h2></div>
+  <div class="i18n hidden" data-en><h2>The three decision cards</h2></div>
+
+  <div class="cards">
+    <figure>
+      <img data-card="task-finished" alt="跑完了 / task finished">
+      <figcaption class="i18n" data-zh>① 跑完了 — agent 干完活了</figcaption>
+      <figcaption class="i18n hidden" data-en>① Done — the agent finished</figcaption>
+    </figure>
+    <figure>
+      <img data-card="task-blocked" alt="卡住了 / task blocked">
+      <figcaption class="i18n" data-zh>② 卡住了 — 它缺一个信息走不下去</figcaption>
+      <figcaption class="i18n hidden" data-en>② Stuck — it needs one thing to continue</figcaption>
+    </figure>
+    <figure>
+      <img data-card="approval-request" alt="要你批准 / approval request">
+      <figcaption class="i18n" data-zh>③ 要你批准 — 这一步只有你能决定</figcaption>
+      <figcaption class="i18n hidden" data-en>③ Approval — only you can decide this</figcaption>
+    </figure>
+  </div>
+
+  <div class="togglebitmap">
+    <span class="i18n" data-zh>卡片语言 / 渲染方式：</span>
+    <span class="i18n hidden" data-en>Card language / render mode:</span>
+    <button type="button" id="m-web" aria-pressed="true">
+      <span class="i18n" data-zh>网页版</span><span class="i18n hidden" data-en>Web</span>
+    </button>
+    <button type="button" id="m-bitmap" aria-pressed="false">
+      <span class="i18n" data-zh>墨水屏位图版（800×480 1-bit）</span><span class="i18n hidden" data-en>E-ink bitmap (800×480 1-bit)</span>
+    </button>
+    <button type="button" id="l-zh" aria-pressed="true">中文</button>
+    <button type="button" id="l-en" aria-pressed="false">English</button>
+  </div>
+  <p class="muted i18n" data-zh style="margin-top:8px">
+    位图版是真正会发到墨水屏上的那 48000 字节画面——它说明这些卡片能画到硬件上，但硬件本身仍未点亮。
+  </p>
+  <p class="muted i18n hidden" data-en style="margin-top:8px">
+    The bitmap version is the actual 48,000-byte frame that would be sent to the panel — it shows the cards
+    <em>can</em> be drawn on hardware, but the hardware itself is still unlit.
+  </p>
+
+  <div class="i18n" data-zh><h3>60 秒演示：三张卡片依次推给你</h3></div>
+  <div class="i18n hidden" data-en><h3>60-second demo: three cards arriving in sequence</h3></div>
+  <video controls playsinline preload="metadata" poster="__POSTER__">
+    <source src="__VIDEO__" type="video/mp4">
+  </video>
+  <p class="muted i18n" data-zh style="margin-top:8px">
+    第三张「要你批准」是<strong>靠人按键才产生结果的</strong>——点批准会真的回调一个外部服务。这一点和「只显示一条消息」有本质区别。
+  </p>
+  <p class="muted i18n hidden" data-en style="margin-top:8px">
+    The third card <strong>only produces a result when a human presses approve</strong> — approving really does call back
+    an external service. That is the difference from merely displaying a message.
+  </p>
+
+  <!-- ═══════════ 表单 ═══════════ -->
+  <div class="i18n" data-zh>
+    <h2>反馈表（约 3 分钟）</h2>
+    <p class="muted">
+      必填项标了 <span class="req">*</span>。其余能填多少填多少。<strong>没有标准答案</strong>——
+      尤其欢迎「手机通知已经够用」这类反对意见，请直接写。
+    </p>
+  </div>
+  <div class="i18n hidden" data-en>
+    <h2>Feedback form (~3 minutes)</h2>
+    <p class="muted">
+      Required fields are marked <span class="req">*</span>. Fill in as much of the rest as you like.
+      <strong>There are no right answers</strong> — "phone notifications are already enough" is especially welcome. Please say so plainly.
+    </p>
+  </div>
+
+  <form id="f" novalidate>
+
+    <!-- A. 工作流 -->
+    <fieldset>
+      <legend><span class="i18n" data-zh>A · 你的工作流</span><span class="i18n hidden" data-en>A · Your workflow</span></legend>
+
+      <div class="q">
+        <label class="qlabel">
+          <span class="i18n" data-zh>1. 你现在用哪些 AI coding agent？<span class="req">*</span></span>
+          <span class="i18n hidden" data-en>1. Which AI coding agents do you use?<span class="req">*</span></span>
+        </label>
+        <div class="opts inline">
+          <label class="opt"><input type="checkbox" name="agents" value="Claude Code">Claude Code</label>
+          <label class="opt"><input type="checkbox" name="agents" value="Codex">Codex</label>
+          <label class="opt"><input type="checkbox" name="agents" value="Cursor">Cursor</label>
+          <label class="opt"><input type="checkbox" name="agents" value="Copilot">Copilot</label>
+          <label class="opt"><input type="checkbox" name="agents" value="其他/other"><span class="i18n" data-zh>其他</span><span class="i18n hidden" data-en>Other</span></label>
+        </div>
+      </div>
+
+      <div class="q">
+        <label class="qlabel" for="q_concurrent">
+          <span class="i18n" data-zh>2. 你通常会同时跑几个任务？</span>
+          <span class="i18n hidden" data-en>2. How many tasks do you usually run at once?</span>
+        </label>
+        <select id="q_concurrent" name="concurrent">
+          <option value="">—</option>
+          <option>1</option><option>2–3</option><option>4–6</option><option>7+</option>
+        </select>
+      </div>
+
+      <div class="q">
+        <label class="qlabel" for="q_how">
+          <span class="i18n" data-zh>3. 你离开电脑后，怎么知道 agent 跑完了、卡住了、或需要你批准？<span class="req">*</span></span>
+          <span class="i18n hidden" data-en>3. When you step away, how do you find out an agent finished, got stuck, or needs your approval?<span class="req">*</span></span>
+        </label>
+        <p class="hint i18n" data-zh>写你实际在用的办法就行：手机推送、声音、Telegram/飞书机器人、tmux、回头看一眼……</p>
+        <p class="hint i18n hidden" data-en>Whatever you actually use: phone push, sounds, a Telegram/Feishu bot, tmux, glancing back at the screen…</p>
+        <textarea id="q_how" name="how" required></textarea>
+      </div>
+    </fieldset>
+
+    <!-- B. 最烦的时刻 -->
+    <fieldset>
+      <legend><span class="i18n" data-zh>B · 最烦的那个时刻</span><span class="i18n hidden" data-en>B · The annoying moment</span></legend>
+
+      <div class="q">
+        <label class="qlabel" for="q_incident">
+          <span class="i18n" data-zh>4. 最近一次因为不知道 agent 状态而白等、或者错过了什么，是什么情况？</span>
+          <span class="i18n hidden" data-en>4. The last time not knowing an agent's state made you wait for nothing, or miss something — what happened?</span>
+        </label>
+        <p class="hint i18n" data-zh>一个具体场景比一段评价有用得多。没有的话就写「没有」。</p>
+        <p class="hint i18n hidden" data-en>One concrete episode beats a paragraph of opinion. If none, just write "none".</p>
+        <textarea id="q_incident" name="incident"></textarea>
+      </div>
+
+      <div class="q">
+        <label class="qlabel" for="q_pain">
+          <span class="i18n" data-zh>5. 你现在的方式（手机通知 / 声音 / IM 机器人 / tmux 等）最烦的一点是什么？</span>
+          <span class="i18n hidden" data-en>5. What is the single most annoying thing about your current setup (phone push / sounds / IM bots / tmux)?</span>
+        </label>
+        <textarea id="q_pain" name="pain"></textarea>
+      </div>
+    </fieldset>
+
+    <!-- C. 免费方案够不够 -->
+    <fieldset>
+      <legend><span class="i18n" data-zh>C · 免费方案够不够用</span><span class="i18n hidden" data-en>C · Is the free option enough?</span></legend>
+
+      <div class="q">
+        <label class="qlabel">
+          <span class="i18n" data-zh>6. 手机通知已经够用了吗？<span class="req">*</span></span>
+          <span class="i18n hidden" data-en>6. Are phone notifications already enough for you?<span class="req">*</span></span>
+        </label>
+        <div class="opts">
+          <label class="opt"><input type="radio" name="enough" value="够用 / enough" required>
+            <span class="i18n" data-zh>够用了，再加设备是多余的</span><span class="i18n hidden" data-en>Yes — an extra device would be redundant</span></label>
+          <label class="opt"><input type="radio" name="enough" value="有时候不够 / sometimes">
+            <span class="i18n" data-zh>有时候不够，但还能忍</span><span class="i18n hidden" data-en>Sometimes not, but I live with it</span></label>
+          <label class="opt"><input type="radio" name="enough" value="不够用 / not enough">
+            <span class="i18n" data-zh>不够用，确实缺东西</span><span class="i18n hidden" data-en>Not enough — something is genuinely missing</span></label>
+        </div>
+      </div>
+
+      <div class="q">
+        <label class="qlabel" for="q_enough_why">
+          <span class="i18n" data-zh>7. 为什么？（选「够用」的话，这里最值得写）</span>
+          <span class="i18n hidden" data-en>7. Why? (If you picked "enough", this is the most valuable box on the page.)</span>
+        </label>
+        <textarea id="q_enough_why" name="enough_why"></textarea>
+      </div>
+
+      <div class="q">
+        <label class="qlabel" for="q_alt">
+          <span class="i18n" data-zh>8. 如果 Cairn 这个东西不存在，你会怎么解决这个交接问题？</span>
+          <span class="i18n hidden" data-en>8. If Cairn didn't exist, how would you solve this handoff problem?</span>
+        </label>
+        <textarea id="q_alt" name="alt"></textarea>
+      </div>
+    </fieldset>
+
+    <!-- D. 对卡片的判断 -->
+    <fieldset>
+      <legend><span class="i18n" data-zh>D · 对上面三张卡片的判断</span><span class="i18n hidden" data-en>D · Your read on the three cards</span></legend>
+
+      <div class="q">
+        <label class="qlabel">
+          <span class="i18n" data-zh>9. 哪个时刻你会想要这样一张卡片？<span class="req">*</span></span>
+          <span class="i18n hidden" data-en>9. At which moment would you want such a card?<span class="req">*</span></span>
+        </label>
+        <div class="opts inline">
+          <label class="opt"><input type="checkbox" name="want" value="跑完了">
+            <span class="i18n" data-zh>① 跑完了</span><span class="i18n hidden" data-en>① Done</span></label>
+          <label class="opt"><input type="checkbox" name="want" value="卡住了">
+            <span class="i18n" data-zh>② 卡住了</span><span class="i18n hidden" data-en>② Stuck</span></label>
+          <label class="opt"><input type="checkbox" name="want" value="要你批准">
+            <span class="i18n" data-zh>③ 要你批准</span><span class="i18n hidden" data-en>③ Approval</span></label>
+          <label class="opt"><input type="checkbox" name="want" value="都不需要">
+            <span class="i18n" data-zh>都不需要</span><span class="i18n hidden" data-en>None of them</span></label>
+        </div>
+      </div>
+
+      <div class="q">
+        <label class="qlabel" for="q_desk">
+          <span class="i18n" data-zh>10. 把它放在桌面上，比手机通知好在哪？或者其实没好处？</span>
+          <span class="i18n hidden" data-en>10. What would putting it on a desk add over a phone notification — or would it add nothing?</span>
+        </label>
+        <textarea id="q_desk" name="desk"></textarea>
+      </div>
+    </fieldset>
+
+    <!-- E. 需求强度 -->
+    <fieldset>
+      <legend><span class="i18n" data-zh>E · 你的需求到什么程度</span><span class="i18n hidden" data-en>E · How strong is the need</span></legend>
+      <p class="hint i18n" data-zh style="margin-bottom:12px">
+        这一题请如实选。<strong>「只是感兴趣」和「愿意预订」是完全不同的事</strong>，我们分开记，不会把前者算成后者。
+      </p>
+      <p class="hint i18n hidden" data-en style="margin-bottom:12px">
+        Please answer honestly. <strong>"Interested" and "would pre-order" are completely different things</strong> —
+        we count them separately and we never promote one to the other.
+      </p>
+
+      <div class="q">
+        <label class="qlabel">
+          <span class="i18n" data-zh>11. 你现在属于哪一档？<span class="req">*</span></span>
+          <span class="i18n hidden" data-en>11. Which of these are you?<span class="req">*</span></span>
+        </label>
+        <div class="opts">
+          <label class="opt"><input type="radio" name="intent" value="只是有点兴趣 / mildly interested" required>
+            <span class="i18n" data-zh>只是有点兴趣，聊聊可以</span><span class="i18n hidden" data-en>Mildly interested — happy to chat</span></label>
+          <label class="opt"><input type="radio" name="intent" value="愿意做原型反馈 / prototype feedback list">
+            <span class="i18n" data-zh>愿意进原型反馈名单，可以联系我试用</span><span class="i18n hidden" data-en>Put me on the prototype list — you can contact me</span></label>
+          <label class="opt"><input type="radio" name="intent" value="愿意预订 / would pre-order">
+            <span class="i18n" data-zh><strong>愿意预订</strong>——如果做出来我会真金白银买</span><span class="i18n hidden" data-en><strong>I would pre-order</strong> — I'd actually pay for it</span></label>
+        </div>
+      </div>
+
+      <div class="cond" id="cond_price">
+        <label class="qlabel" for="q_price" style="margin-bottom:6px">
+          <span class="i18n" data-zh>12. 你能接受的价位区间是？（人民币）</span>
+          <span class="i18n hidden" data-en>12. What price range would you accept? (CNY)</span>
+        </label>
+        <select id="q_price" name="price">
+          <option value="">—</option>
+          <option>≤300</option><option>300–500</option><option>500–800</option>
+          <option>800–1200</option><option>1200–2000</option><option>&gt;2000</option>
+        </select>
+      </div>
+
+      <div class="q" style="margin-top:20px">
+        <label class="qlabel">
+          <span class="i18n" data-zh>13. 如果不做成硬件、只做一个软件，你还感兴趣吗？</span>
+          <span class="i18n hidden" data-en>13. If this were software only — no hardware — would you still want it?</span>
+        </label>
+        <p class="hint i18n" data-zh>这题用来区分：你要的是「这个功能」，还是「一块固定的、离线的屏」。</p>
+        <p class="hint i18n hidden" data-en>This separates wanting the <em>function</em> from wanting a <em>fixed, offline screen</em>.</p>
+        <div class="opts inline">
+          <label class="opt"><input type="radio" name="software_only" value="一样感兴趣 / same">
+            <span class="i18n" data-zh>一样感兴趣</span><span class="i18n hidden" data-en>Just as interested</span></label>
+          <label class="opt"><input type="radio" name="software_only" value="只对硬件感兴趣 / hardware only">
+            <span class="i18n" data-zh>那就不需要了</span><span class="i18n hidden" data-en>Then no</span></label>
+          <label class="opt"><input type="radio" name="software_only" value="不确定 / unsure">
+            <span class="i18n" data-zh>不确定</span><span class="i18n hidden" data-en>Not sure</span></label>
+        </div>
+      </div>
+    </fieldset>
+
+    <!-- F. 联系 -->
+    <fieldset>
+      <legend><span class="i18n" data-zh>F · 要不要接着聊</span><span class="i18n hidden" data-en>F · Keep talking?</span></legend>
+
+      <div class="q">
+        <label class="qlabel">
+          <span class="i18n" data-zh>14. 愿意聊 15 分钟吗？</span>
+          <span class="i18n hidden" data-en>14. Up for a 15-minute chat?</span>
+        </label>
+        <div class="opts inline">
+          <label class="opt"><input type="radio" name="chat" value="愿意 / yes">
+            <span class="i18n" data-zh>愿意</span><span class="i18n hidden" data-en>Yes</span></label>
+          <label class="opt"><input type="radio" name="chat" value="不愿意 / no">
+            <span class="i18n" data-zh>这次不了</span><span class="i18n hidden" data-en>Not this time</span></label>
+        </div>
+      </div>
+
+      <div class="q" style="margin-top:20px">
+        <label class="qlabel" for="q_contact">
+          <span class="i18n" data-zh>15. 怎么联系你？（可选）</span>
+          <span class="i18n hidden" data-en>15. How can we reach you? (optional)</span>
+        </label>
+        <p class="hint i18n" data-zh>邮箱 / 微信 / X / GitHub，随便留一个。不填也能提交，我们会直接回在这个帖子里。</p>
+        <p class="hint i18n hidden" data-en>Email / X / GitHub — any one. You can also skip it and just reply in the thread.</p>
+        <input type="text" id="q_contact" name="contact" autocomplete="off">
+      </div>
+
+      <div class="q" style="margin-top:20px">
+        <label class="qlabel" for="q_name">
+          <span class="i18n" data-zh>16. 「Cairn」这个名字，你第一反应怎么读？（可选）</span>
+          <span class="i18n hidden" data-en>16. First reaction to the name "Cairn"? (optional)</span>
+        </label>
+        <p class="hint i18n" data-zh>念不出来、记不住、或者联想到别的，都请直说——我们想知道真实的第一反应，不会因为你没读懂就换个名字。</p>
+        <p class="hint i18n hidden" data-en>Unpronounceable, forgettable, or sounds like something else — say so. We want the real first reaction.</p>
+        <textarea id="q_name" name="name_read" style="min-height:56px"></textarea>
+      </div>
+    </fieldset>
+
+    <div class="actions">
+      <button type="submit" class="btn">
+        <span class="i18n" data-zh>生成反馈内容</span><span class="i18n hidden" data-en>Generate my feedback</span>
+      </button>
+      <button type="button" class="btn ghost" id="reset">
+        <span class="i18n" data-zh>清空重填</span><span class="i18n hidden" data-en>Clear</span>
+      </button>
+    </div>
+    <p class="muted" id="err" style="color:#a33;margin-top:10px;display:none"></p>
+  </form>
+
+  <!-- 结果 -->
+  <div id="result">
+    <div class="i18n" data-zh>
+      <h3 style="margin-top:0">填好了。选一种方式发给我们：</h3>
+      <p class="muted" style="margin-bottom:10px">
+        下面这段就是你的反馈全文。<strong>复制</strong>后贴在邮件、帖子里，或随便哪个你觉得方便的地方；
+        也可以直接点<strong>「用邮件发送」</strong>。
+      </p>
+    </div>
+    <div class="i18n hidden" data-en>
+      <h3 style="margin-top:0">Done. Pick how to send it:</h3>
+      <p class="muted" style="margin-bottom:10px">
+        This is your full feedback below. <strong>Copy</strong> it into an email, a reply, or anywhere you like —
+        or use <strong>"Send by email"</strong>.
+      </p>
+    </div>
+    <textarea id="out" readonly></textarea>
+    <div class="copyrow">
+      <button type="button" class="btn" id="copy">
+        <span class="i18n" data-zh>复制全文</span><span class="i18n hidden" data-en>Copy all</span>
+      </button>
+      <a class="btn ghost" id="mailto" href="#" style="text-decoration:none;display:inline-block;padding:11px 20px;border-radius:8px;border:1px solid var(--ink);font-weight:600">
+        <span class="i18n" data-zh>用邮件发送</span><span class="i18n hidden" data-en>Send by email</span>
+      </a>
+      <button type="button" class="btn ghost" id="download">
+        <span class="i18n" data-zh>下载为文件</span><span class="i18n hidden" data-en>Download file</span>
+      </button>
+      <span class="copied" id="copied"></span>
+    </div>
+  </div>
+
+  <footer>
+    <div class="i18n" data-zh>
+      <p>
+        联系邮箱：<a href="mailto:2387756951@qq.com">2387756951@qq.com</a>　·　
+        这个页面是<strong>单文件</strong>的，可以离线打开、可以转发给同事。
+      </p>
+      <p>
+        Cairn 目前是原型阶段，<strong>没有价格、没有上市时间、没有订阅计划</strong>。
+        你在这里填的任何内容都只用于判断这个方向值不值得做。
+      </p>
+    </div>
+    <div class="i18n hidden" data-en>
+      <p>
+        Contact: <a href="mailto:2387756951@qq.com">2387756951@qq.com</a>　·　
+        This page is a <strong>single file</strong> — it works offline and can be forwarded.
+      </p>
+      <p>
+        Cairn is a prototype. <strong>No price, no ship date, no subscription plan.</strong>
+        Nothing you write here is used for anything except deciding whether this direction is worth building.
+      </p>
+    </div>
+  </footer>
+</div>
+
+<script>
+/* ─────────── 图片资源（内嵌 base64） ─────────── */
+const ASSETS = __ASSETS__;
+
+/* ─────────── 语言切换 ─────────── */
+let LANG = 'zh';
+function setLang(l){
+  LANG = l;
+  document.querySelectorAll('.i18n').forEach(el=>{
+    const on = el.dataset[l] !== undefined;
+    el.classList.toggle('hidden', !on);
+  });
+  document.documentElement.lang = (l === 'zh' ? 'zh-CN' : 'en');
+  document.getElementById('lang-zh').setAttribute('aria-pressed', String(l === 'zh'));
+  document.getElementById('lang-en').setAttribute('aria-pressed', String(l === 'en'));
+}
+document.getElementById('lang-zh').onclick = () => setLang('zh');
+document.getElementById('lang-en').onclick = () => setLang('en');
+
+/* ─────────── 卡片图：语言 × 渲染方式 ─────────── */
+let MODE = 'web', CARDLANG = 'zh';
+function paintCards(){
+  document.querySelectorAll('img[data-card]').forEach(img=>{
+    const key = img.dataset.card;
+    const suffix = MODE === 'bitmap' ? 'bitmap/' : '';
+    img.src = ASSETS[suffix + key + '-' + CARDLANG] || '';
+  });
+  document.getElementById('m-web').setAttribute('aria-pressed', String(MODE === 'web'));
+  document.getElementById('m-bitmap').setAttribute('aria-pressed', String(MODE === 'bitmap'));
+  document.getElementById('l-zh').setAttribute('aria-pressed', String(CARDLANG === 'zh'));
+  document.getElementById('l-en').setAttribute('aria-pressed', String(CARDLANG === 'en'));
+}
+document.getElementById('m-web').onclick = () => { MODE = 'web'; paintCards(); };
+document.getElementById('m-bitmap').onclick = () => { MODE = 'bitmap'; paintCards(); };
+document.getElementById('l-zh').onclick = () => { CARDLANG = 'zh'; paintCards(); };
+document.getElementById('l-en').onclick = () => { CARDLANG = 'en'; paintCards(); };
+
+/* ─────────── 条件字段：愿意预订才问价位 ─────────── */
+document.querySelectorAll('input[name=intent]').forEach(r=>{
+  r.addEventListener('change', () => {
+    const v = document.querySelector('input[name=intent]:checked');
+    const show = v && v.value.indexOf('愿意预订') === 0;
+    document.getElementById('cond_price').classList.toggle('on', !!show);
+  });
+});
+
+/* ─────────── 表单序列化 ─────────── */
+const Q = {
+  agents:{zh:'1. 使用的 agent', en:'1. Agents used'},
+  concurrent:{zh:'2. 同时跑几个任务', en:'2. Concurrent tasks'},
+  how:{zh:'3. 离开电脑后如何知道状态', en:'3. How you learn state while away'},
+  incident:{zh:'4. 最近一次白等/错过的具体情况', en:'4. Last time you waited for nothing / missed it'},
+  pain:{zh:'5. 现有方式最烦的一点', en:'5. Most annoying thing about current setup'},
+  enough:{zh:'6. 手机通知够用吗', en:'6. Are phone notifications enough'},
+  enough_why:{zh:'7. 为什么', en:'7. Why'},
+  alt:{zh:'8. 没有 Cairn 会怎么解决', en:'8. How you would solve it without Cairn'},
+  want:{zh:'9. 想要哪个时刻的卡片', en:'9. Which card you would want'},
+  desk:{zh:'10. 桌面 vs 手机通知', en:'10. Desk vs phone notification'},
+  intent:{zh:'11. 需求强度', en:'11. Intent level'},
+  price:{zh:'12. 可接受价位', en:'12. Acceptable price'},
+  software_only:{zh:'13. 只做软件还感兴趣吗', en:'13. Software-only interest'},
+  chat:{zh:'14. 愿意聊 15 分钟吗', en:'14. Up for a 15-min chat'},
+  contact:{zh:'15. 联系方式', en:'15. Contact'},
+  name_read:{zh:'16. 对名字的第一反应', en:'16. First reaction to the name'},
+};
+const ORDER = ['agents','concurrent','how','incident','pain','enough','enough_why',
+               'alt','want','desk','intent','price','software_only','chat','contact','name_read'];
+
+// 取字段值：优先按 name 找（最可靠），退回 q_<name>，都没有就返回空串。
+// 之前按 id 硬拼 'q_' + name，字段 id 一旦不一致就抛 null，整个提交静默失败。
+function fieldValue(n){
+  const el = document.querySelector('[name="' + n + '"]') || document.getElementById('q_' + n);
+  return el ? String(el.value || '').trim() : '';
+}
+
+function collect(){
+  const v = {};
+  v.agents = [...document.querySelectorAll('input[name=agents]:checked')].map(x=>x.value).join('、');
+  ['concurrent','price'].forEach(n=>{ v[n] = fieldValue(n); });
+  ['how','incident','pain','enough_why','alt','desk','name_read','contact'].forEach(n=>{
+    v[n] = fieldValue(n);
+  });
+  ['enough','intent','software_only','chat'].forEach(n=>{
+    const c = document.querySelector('input[name=' + n + ']:checked');
+    v[n] = c ? c.value : '';
+  });
+  v.want = [...document.querySelectorAll('input[name=want]:checked')].map(x=>x.value).join('、');
+  return v;
+}
+
+function validate(){
+  const v = collect();
+  const missing = [];
+  if (!v.agents) missing.push(LANG === 'zh' ? '第 1 题（使用的 agent）' : 'Q1 (agents used)');
+  if (!v.how)    missing.push(LANG === 'zh' ? '第 3 题（如何知道状态）' : 'Q3 (how you learn state)');
+  if (!v.enough) missing.push(LANG === 'zh' ? '第 6 题（手机通知够用吗）' : 'Q6 (are notifications enough)');
+  if (!v.want)   missing.push(LANG === 'zh' ? '第 9 题（想要哪个时刻的卡片）' : 'Q9 (which card)');
+  if (!v.intent) missing.push(LANG === 'zh' ? '第 11 题（需求强度）' : 'Q11 (intent level)');
+  return missing;
+}
+
+function compose(){
+  const v = collect();
+  const zh = LANG === 'zh';
+  const L = [];
+  L.push(zh ? '## Cairn 原型反馈' : '## Cairn prototype feedback');
+  L.push('');
+  L.push(zh ? '来源：Cairn 决策卡片原型页（USB 开发样机，实机未点亮）' : 'Source: Cairn decision-card prototype page (USB dev prototype, hardware unlit)');
+  L.push('');
+  ORDER.forEach(k=>{
+    const val = v[k] || (zh ? '（未填）' : '(blank)');
+    L.push('**' + (zh ? Q[k].zh : Q[k].en) + '**');
+    L.push(val);
+    L.push('');
+  });
+  L.push('---');
+  L.push(zh
+    ? '说明：以上为自愿填写的原型反馈。「有点兴趣」与「愿意预订」是分开记录的，本反馈不构成任何购买承诺。'
+    : 'Note: voluntary prototype feedback. "Interested" and "would pre-order" are recorded separately; this is not a purchase commitment.');
+  return L.join('\n');
+}
+
+document.getElementById('f').addEventListener('submit', ev=>{
+  ev.preventDefault();
+  const missing = validate();
+  const err = document.getElementById('err');
+  if (missing.length){
+    err.style.display = 'block';
+    err.textContent = (LANG === 'zh' ? '还差：' : 'Still missing: ') + missing.join('；');
+    err.scrollIntoView({behavior:'smooth', block:'center'});
+    return;
+  }
+  err.style.display = 'none';
+  const text = compose();
+  document.getElementById('out').value = text;
+  const subject = LANG === 'zh' ? 'Cairn 原型反馈' : 'Cairn prototype feedback';
+  const url = 'mailto:2387756951@qq.com?subject=' + encodeURIComponent(subject)
+            + '&body=' + encodeURIComponent(text.slice(0, 1800));
+  document.getElementById('mailto').href = url;
+  const r = document.getElementById('result');
+  r.classList.add('on');
+  r.scrollIntoView({behavior:'smooth', block:'start'});
+});
+
+document.getElementById('copy').onclick = async ()=>{
+  const t = document.getElementById('out');
+  try { await navigator.clipboard.writeText(t.value); }
+  catch { t.select(); document.execCommand('copy'); }
+  const c = document.getElementById('copied');
+  c.textContent = LANG === 'zh' ? '已复制 ✓' : 'Copied ✓';
+  setTimeout(()=>{ c.textContent = ''; }, 2200);
+};
+
+document.getElementById('download').onclick = ()=>{
+  const blob = new Blob([document.getElementById('out').value], {type:'text/markdown;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'cairn-feedback.md';
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
+};
+
+document.getElementById('reset').onclick = ()=>{
+  document.getElementById('f').reset();
+  document.getElementById('cond_price').classList.remove('on');
+  document.getElementById('result').classList.remove('on');
+  document.getElementById('err').style.display = 'none';
+};
+
+/* 初始化 */
+setLang('zh');
+paintCards();
+</script>
+</body>
+</html>
