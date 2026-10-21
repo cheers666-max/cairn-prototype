@@ -1,0 +1,21 @@
+# Cairn — Calm-Technology E-Ink Companion for AI Agents (Prototype)
+
+> Cairn is a physical 800×480 (1-bit) e-ink desk prototype designed for developers working with autonomous AI coding agents (Claude Code, Cursor, Codex). Instead of a real-time scrolling log or intrusive phone/desktop notifications, Cairn applies Mark Weiser's Calm Technology (1995) to move agent decision handoffs into the user's peripheral vision.
+
+## Core Positioning
+- **Category**: AI Coding Agent Decision Handoff Companion / Calm Technology Hardware Prototype
+- **What it does**: Displays exactly three low-frequency decision cards at a fixed physical spot on the desk (0 pop-ups, 0 audio alerts, <= 8 seconds to parse at a glance):
+  1. **Task Finished (`DONE`)**: Agent completed the task; ready for review.
+  2. **Task Blocked (`BLOCKED`)**: Agent is missing a specific piece of context to proceed.
+  3. **Approval Request (`APPROVAL`)**: High-impact action requires human sign-off.
+- **What it is NOT**: Not a real-time usage/token dashboard, not an Android tablet, and does not market "e-ink eye-strain/focus" claims (citing Siegenthaler 2012 & Benedetto 2013).
+
+## Factual Prototype Boundaries (Current Stage)
+- USB-tethered software/display prototype (`800×480` 1-bit bitmap verified).
+- Standalone Wi-Fi, battery, and magnetic mounting are not yet built (7.5mm thickness is a design target, not an achieved spec).
+- Voice recording / ASR not implemented; does not run Android or third-party apps.
+- No price, no ship date, and no subscription model in the prototype validation stage.
+
+## Canonical Links
+- [Interactive Prototype & 3-Minute Feedback Form (Global / GitHub Pages)](https://cheers666-max.github.io/cairn-prototype/)
+- [Interactive Prototype & Feedback Form (China Mirror / OBS)](https://cn-zhengzhou-3.xstore.qihu.com/mcp-yue-tool/cairn/index.html)

@@ -3,8 +3,49 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Cairn — 决策卡片原型 · 反馈表 / Decision-card prototype · feedback</title>
-<meta name="description" content="Cairn 是一台 AI 墨水屏个人助理原型。手机把每件事都推到注意力中心；我们想试试把 agent 的决定放回余光。">
+<title>Cairn — AI 墨水屏决策卡片原型 · 反馈表 / Calm Tech E-Ink Companion for AI Agents</title>
+<meta name="description" content="Cairn 是一台基于 Calm Technology（平静的技术，Weiser 1995）设计的桌面 800×480 墨水屏个人助理原型。只把 AI Coding Agent（Claude Code / Cursor / Codex）需要人类拍板的 3 类决策卡片（跑完了 / 卡住了 / 要你批准）放在余光外围，0 弹窗、0 提示音。">
+<link rel="canonical" href="https://cheers666-max.github.io/cairn-prototype/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Cairn — 别让 AI 的进度条绑架你的中心视线">
+<meta property="og:description" content="基于 Calm Technology 的 800×480 1-bit 墨水屏 AI Agent 决策交接原型。只做三张卡：跑完了 / 卡住了 / 要你批准。">
+<meta property="og:url" content="https://cheers666-max.github.io/cairn-prototype/">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "SoftwareApplication",
+      "name": "Cairn",
+      "applicationCategory": "DeveloperApplication",
+      "operatingSystem": "USB Host / Desktop Companion (800x480 1-bit E-Ink)",
+      "description": "Cairn is a calm-technology e-ink companion prototype for AI coding agents (Claude Code, Cursor, Codex). Instead of a real-time scrolling dashboard, it places three low-frequency decision handoff cards (Task Finished, Task Blocked, Approval Request) in the user's peripheral vision.",
+      "url": "https://cheers666-max.github.io/cairn-prototype/"
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is Cairn and how does it differ from an AI agent dashboard?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Cairn is an 800x480 1-bit e-ink desk prototype built around Mark Weiser's Calm Technology (1995). Unlike real-time scrolling dashboards or phone push notifications that demand center-screen attention, Cairn stays in peripheral vision and only displays a static card when an AI agent finishes a task, gets blocked, or requires human approval."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Does an e-ink screen automatically improve developer focus?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No. Peer-reviewed literature (Siegenthaler et al., 2012; Benedetto et al., 2013) shows visual fatigue depends primarily on image quality rather than display technology, and e-ink advantages were measured in continuous prose reading rather than all-day coding workflows. Cairn relies on peripheral placement (Calm Technology) rather than eye-strain claims."
+          }
+        }
+      ]
+    }
+  ]
+}
+</script>
 <style>
   :root{
     --ink:#141414; --paper:#f7f6f3; --card:#ffffff; --line:#dedbd4;

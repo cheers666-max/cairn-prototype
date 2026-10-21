@@ -2,28 +2,39 @@
 *{margin:0;padding:0;box-sizing:border-box}
 body{width:1080px;height:1440px;background:#f7f6f3;color:#141414;
      font-family:ui-monospace,SFMono-Regular,Menlo,"PingFang SC","Noto Sans CJK SC",monospace;
-     display:flex;flex-direction:column;padding:84px}
-.top{font-size:26px;letter-spacing:.16em;color:#6b6862;text-transform:uppercase;flex:none}
+     display:flex;flex-direction:column;padding:80px}
+.top{font-size:25px;letter-spacing:.14em;color:#6b6862;text-transform:uppercase;flex:none;
+     display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #dedbd4;padding-bottom:24px}
 .top b{color:#1f4d3a}
-.main{flex:1;display:flex;flex-direction:column;justify-content:center;gap:44px}
-.bot{flex:none;font-size:29px;line-height:1.75;color:#6b6862}
+.main{flex:1;display:flex;flex-direction:column;justify-content:center;gap:42px}
+.bot{flex:none;font-size:27px;line-height:1.7;color:#6b6862;border-top:2px solid #dedbd4;padding-top:24px}
 .bot b{color:#141414}
-h1{font-size:94px;line-height:1.3;font-weight:800;letter-spacing:-.02em}
-h1.sm{font-size:78px}
-h1 em{font-style:normal;color:#1f4d3a;border-bottom:10px solid #1f4d3a;padding-bottom:2px}
-.mid{font-size:37px;line-height:1.78;color:#38362f}
+h1{font-size:86px;line-height:1.28;font-weight:800;letter-spacing:-.02em}
+h1.sm{font-size:74px;line-height:1.3}
+h1 em{font-style:normal;color:#1f4d3a;border-bottom:9px solid #1f4d3a;padding-bottom:2px}
+.mid{font-size:36px;line-height:1.78;color:#38362f}
 .mid b{color:#141414}
 .rule{border:0;border-top:2px solid #141414}
-.quote{font-size:50px;line-height:1.72;font-weight:700}
+.quote{font-size:48px;line-height:1.68;font-weight:700}
 .cite{font-size:26px;color:#6b6862;line-height:1.7}
-.cards{display:flex;flex-direction:column;gap:26px}
+.compare{display:flex;flex-direction:column;gap:20px;background:#efede8;padding:30px 34px;border-radius:8px;border-left:6px solid #1f4d3a}
+.compare-item{font-size:29px;line-height:1.6;color:#38362f}
+.compare-item b{color:#141414}
+.compare-item .bad{color:#8c3a2b;font-weight:700}
+.compare-item .good{color:#1f4d3a;font-weight:700}
+.lit-list{display:flex;flex-direction:column;gap:24px;background:#efede8;padding:32px 36px;border-radius:8px;border:1px solid #dedbd4}
+.lit-item{font-size:29px;line-height:1.65;color:#38362f}
+.lit-item b{color:#141414}
+.cards{display:flex;flex-direction:column;gap:24px}
 .cards figure{background:#fff;border:2px solid #dedbd4;border-radius:6px;overflow:hidden}
-.cards img{width:100%;height:300px;object-fit:cover;object-position:top center;display:block}
-.cards figcaption{font-size:25px;color:#4a4740;padding:13px 18px;border-top:1px solid #dedbd4}
-</style><div class="top">Cairn · <b>原型求反馈</b></div>
+.cards img{width:100%;height:290px;object-fit:cover;object-position:top center;display:block}
+.cards figcaption{font-size:25px;color:#4a4740;padding:14px 20px;border-top:1px solid #dedbd4;display:flex;justify-content:space-between}
+.cards figcaption b{color:#141414}
+.cards figcaption span.tag{color:#1f4d3a;font-weight:700}
+</style><div class="top"><span>CAIRN · <b>CALM TECH PROTOTYPE</b></span><span>01 / 04</span></div>
   <div class="main">
-    <h1>我们想验证的<br>不是墨水屏<br>是<em>「余光」</em></h1>
-    <div class="mid">手机把每件事都推到注意力的<b>中心</b>。<br>
-    能不能把 agent 的决定放回<b style="color:#1f4d3a">余光</b>？</div>
+    <h1>别让 AI 的进度条<br>绑架你的<br><em>「中心视线」</em></h1>
+    <div class="mid">后台同时挂着 Agent 干活之后，<br>
+    我们在桌角放了一块<b style="color:#1f4d3a">只给余光看</b>的墨水屏。</div>
   </div>
-<div class="bot">卡片待在固定位置 · <b>不亮 · 不响 · 不弹窗</b></div>
+  <div class="bot"><b>800×480 1-BIT E-INK</b> · 固定物理坐标 · 0 弹窗 · 0 提示音</div>
